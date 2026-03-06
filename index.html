@@ -807,7 +807,6 @@
         <input type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password">
       </div>
       <button class="btn-block" onclick="doLogin()">🔐 Se connecter</button>
-      <p class="text-center mt-4" style="font-size:.78rem;color:var(--muted)">Compte démo : admin / labo2024</p>
     </div>
   </div>
 </div>
@@ -855,16 +854,18 @@
 
 <!-- ══════════════════ MODAL: ADD PATIENT ══════════════════ -->
 <div id="modalAdd" class="modal-overlay">
-  <div class="modal">
+  <div class="modal" style="max-width:600px">
     <div class="modal-header">
-      <h3>Nouveau patient / examen</h3>
+      <h3>Nouveau patient</h3>
       <button class="modal-close" onclick="closeModal('modalAdd')">✕</button>
     </div>
-    <div id="addAlert" class="alert error"></div>
+    <div class="alert" id="addAlert"></div>
+
+    <p style="font-size:.8rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:12px">Informations du patient</p>
     <div class="form-row">
       <div class="form-group">
         <label>Nom *</label>
-        <input type="text" id="addNom" placeholder="NOM">
+        <input type="text" id="addNom" placeholder="NOM DE FAMILLE">
       </div>
       <div class="form-group">
         <label>Prénom *</label>
@@ -882,37 +883,30 @@
         </select>
       </div>
       <div class="form-group">
-        <label>N° Dossier *</label>
-        <input type="text" id="addDossier" placeholder="DOS-2024-001">
+        <label>Âge *</label>
+        <input type="number" id="addAge" placeholder="Ex: 35" min="0" max="120">
       </div>
     </div>
     <div class="form-group">
-      <label>Type d'examen *</label>
-      <select id="addTypeExamen">
-        <option value="">-- Sélectionner --</option>
-        <option>Numération Formule Sanguine (NFS)</option>
-        <option>Glycémie</option>
-        <option>Bilan lipidique</option>
-        <option>Bilan hépatique</option>
-        <option>Bilan rénal</option>
-        <option>Ionogramme sanguin</option>
-        <option>TSH (Thyroïde)</option>
-        <option>Sérologie</option>
-        <option>Urine (ECBU)</option>
-        <option>Coproculture</option>
-        <option>Coagulation (TP/TCA)</option>
-        <option>Autre examen</option>
-      </select>
+      <label>N° Dossier *</label>
+      <input type="text" id="addDossier" placeholder="Ex: 001">
     </div>
-    <div class="form-group">
-      <label>Date du prélèvement *</label>
-      <input type="date" id="addDate">
+
+    <hr class="divider">
+    <p style="font-size:.8rem;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:12px">Examens à réaliser</p>
+
+    <div id="examensContainer">
+      <!-- Les examens sont ajoutés dynamiquement ici -->
     </div>
-    <button class="btn-block" onclick="addPatient()">✅ Enregistrer</button>
+
+    <button onclick="ajouterLigneExamen()" style="background:none;border:2px dashed var(--border);color:var(--sky);padding:10px;width:100%;border-radius:10px;cursor:pointer;font-size:.88rem;margin-bottom:16px">
+      ➕ Ajouter un examen
+    </button>
+
+    <button class="btn-block" onclick="addPatient()">✅ Enregistrer le patient</button>
   </div>
 </div>
 
-<!-- ══════════════════ MODAL: UPDATE STATUS ══════════════════ -->
 <div id="modalUpdate" class="modal-overlay">
   <div class="modal">
     <div class="modal-header">
@@ -939,15 +933,76 @@
       </div>
       <div class="form-group">
         <label>Numéro de téléphone *</label>
-        <input type="tel" id="retraitTel" placeholder="+33 6 00 00 00 00">
+        <input type="tel" id="retraitTel" placeholder="6XX XXX XXX">
       </div>
       <div class="form-group">
         <label>Date de retrait *</label>
         <input type="date" id="retraitDate">
       </div>
     </div>
+    <div id="rejeteFields" style="display:none">
+      <hr class="divider">
+      <p style="font-size:.82rem;color:var(--muted);margin-bottom:16px">⚠️ Motif de rejet</p>
+      <div class="form-group">
+        <label>Motif *</label>
+        <select id="motifRejet">
+          <option value="">-- Sélectionner un motif --</option>
+          <option value="échantillon insuffisant">Échantillon insuffisant</option>
+          <option value="échantillon mal étiqueté">Échantillon mal étiqueté</option>
+          <option value="tube inadéquat">Tube inadéquat</option>
+          <option value="délai d'acheminement dépassé">Délai d'acheminement dépassé</option>
+          <option value="échantillon hémolysé">Échantillon hémolysé</option>
+          <option value="échantillon coagulé">Échantillon coagulé</option>
+          <option value="volume insuffisant">Volume insuffisant</option>
+        </select>
+      </div>
+    </div>
 
     <button class="btn-block" onclick="saveStatus()">💾 Enregistrer le statut</button>
+  </div>
+</div>
+
+<!-- ══ MODAL: AJOUTER EXAMEN ══ -->
+<div id="modalAddExam" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Ajouter un examen</h3>
+      <button class="modal-close" onclick="closeModal('modalAddExam')">✕</button>
+    </div>
+    <div class="form-group">
+      <label>Type d'examen *</label>
+      <select id="addExamType">
+        <option value="">-- Sélectionner --</option>
+        <option>Numération Formule Sanguine (NFS)</option>
+        <option>Glycémie</option>
+        <option>Bilan lipidique</option>
+        <option>Bilan hépatique</option>
+        <option>Bilan rénal</option>
+        <option>Ionogramme sanguin</option>
+        <option>TSH (Thyroïde)</option>
+        <option>Sérologie</option>
+        <option>Urine (ECBU)</option>
+        <option>Coproculture</option>
+        <option>Coagulation (TP/TCA)</option>
+        <option>Autre examen</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Date du prélèvement *</label>
+      <input type="date" id="addExamDate">
+    </div>
+    <button class="btn-block" onclick="saveNewExam()">✅ Ajouter</button>
+  </div>
+</div>
+
+<!-- ══ MODAL: DÉTAIL PATIENT (public) ══ -->
+<div id="modalPatient" class="modal-overlay">
+  <div class="modal" style="max-width:580px">
+    <div class="modal-header">
+      <h3>Dossier Patient</h3>
+      <button class="modal-close" onclick="closeModal('modalPatient')">✕</button>
+    </div>
+    <div id="patientDetailContent"></div>
   </div>
 </div>
 
@@ -956,10 +1011,8 @@
 
 
 
+
 <script>
-// ══════════════════════════════════════════════
-//  FIREBASE - chargement dynamique
-// ══════════════════════════════════════════════
 var firebaseConfig = {
   apiKey: "AIzaSyCxCKWUSjwlHKnreEbP0rNrDb-soWPAJ10",
   authDomain: "labo-mokolo.firebaseapp.com",
@@ -978,11 +1031,10 @@ var currentEditExamenId = null;
 var users = [{ username: "admin", password: "labo2024", display: "Dr. Admin" }];
 
 function loadFirebase(callback) {
-  // Charger app
-  var s1 = document.createElement('script');
+  var s1 = document.createElement("script");
   s1.src = "https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js";
   s1.onload = function() {
-    var s2 = document.createElement('script');
+    var s2 = document.createElement("script");
     s2.src = "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js";
     s2.onload = function() {
       firebase.initializeApp(firebaseConfig);
@@ -1001,24 +1053,20 @@ function loadFirebase(callback) {
 
 function showDbError() {
   var body = document.getElementById("homeTableBody");
-  if (body) body.innerHTML = '<tr><td colspan="3" style="text-align:center;padding:20px;color:red">⚠️ Connexion Firebase impossible. Vérifiez votre connexion internet.</td></tr>';
+  if (body) body.innerHTML = "<tr><td colspan=\"3\" style=\"text-align:center;padding:20px;color:red\">⚠️ Connexion Firebase impossible.</td></tr>";
 }
 
-// ── LISTENERS TEMPS RÉEL ──
 function startListeners() {
   patientsCol.onSnapshot(function(snap) {
     allPatients = [];
     snap.forEach(function(d) { allPatients.push(Object.assign({ _id: d.id }, d.data())); });
-    renderTable();
-    renderHomeTable();
-  }, function(err) { showDbError(); });
-
+    renderTable(); renderHomeTable();
+  });
   examensCol.onSnapshot(function(snap) {
     allExamens = [];
     snap.forEach(function(d) { allExamens.push(Object.assign({ _id: d.id }, d.data())); });
-    renderTable();
-    renderHomeTable();
-  }, function(err) { showDbError(); });
+    renderTable(); renderHomeTable();
+  });
 }
 
 // ── NAVIGATION ──
@@ -1057,6 +1105,85 @@ function logout() {
   showPage("home");
 }
 
+// ── PATIENT DETAIL MODAL (public) ──
+function openPatientDetail(patientId) {
+  var p = null;
+  for (var i = 0; i < allPatients.length; i++) {
+    if (allPatients[i]._id === patientId) { p = allPatients[i]; break; }
+  }
+  if (!p) return;
+
+  var examens = [];
+  for (var i = 0; i < allExamens.length; i++) {
+    if (allExamens[i].patient_id === patientId) examens.push(allExamens[i]);
+  }
+
+  var civilite = p.sexe === "Féminin" ? "Mme" : "M.";
+  var nomComplet = civilite + " " + p.nom + " " + p.prenom;
+
+  var statusMap = {
+    en_cours:   { cls: "en-cours",   label: "En cours de traitement",         emoji: "🟡" },
+    disponible: { cls: "disponible", label: "Résultat disponible",             emoji: "🔵" },
+    retire:     { cls: "retire",     label: "Résultat retiré",                 emoji: "🟢" },
+    rejete:     { cls: "rejete",     label: "Rejeté",                          emoji: "🔴" }
+  };
+
+  var examensHTML = "";
+  if (examens.length === 0) {
+    examensHTML = "<p style=\"color:var(--muted);font-size:.88rem\">Aucun examen enregistré.</p>";
+  } else {
+    for (var i = 0; i < examens.length; i++) {
+      var ex = examens[i];
+      var s = statusMap[ex.statut] || statusMap.en_cours;
+
+      // Message d'orientation
+      var msg = "";
+      var msgColor = "";
+      if (ex.statut === "disponible") {
+        msg = nomComplet + ", votre examen est disponible. Vous pouvez passer chercher les résultats dès que possible.";
+        msgColor = "#1E40AF";
+      } else if (ex.statut === "en_cours") {
+        msg = nomComplet + ", votre examen est toujours en cours. Veuillez patienter.";
+        msgColor = "#92400E";
+      } else if (ex.statut === "retire") {
+        msg = nomComplet + ", vos résultats ont déjà été retirés.";
+        msgColor = "#065F46";
+      } else if (ex.statut === "rejete") {
+        var motif = ex.motif_rejet ? ex.motif_rejet : "motif non précisé";
+        msg = nomComplet + ", votre examen a été rejeté pour cause de : " + motif + ". Veuillez contacter le laboratoire.";
+        msgColor = "#991B1B";
+      }
+
+      examensHTML += "<div style=\"background:var(--off-white);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:12px;\">" +
+        "<div style=\"display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;\">" +
+          "<strong style=\"font-size:.92rem;\">" + ex.type_examen + "</strong>" +
+          "<span class=\"pill " + s.cls + "\"><span class=\"pill-dot\"></span>" + s.label + "</span>" +
+        "</div>" +
+        "<div style=\"font-size:.8rem;color:var(--muted);margin-bottom:10px\">Prélèvement : " + formatDate(ex.date_prelevement) + "</div>" +
+        "<div style=\"background:white;border-left:3px solid " + msgColor + ";padding:10px 12px;border-radius:6px;font-size:.85rem;color:" + msgColor + ";line-height:1.5;\">" +
+          "💬 " + msg +
+        "</div>" +
+      "</div>";
+    }
+  }
+
+  var html =
+    "<div style=\"background:linear-gradient(135deg,var(--navy),#145DA0);border-radius:14px;padding:20px;margin-bottom:20px;color:white;\">" +
+      "<div style=\"font-size:1.3rem;font-family:'DM Serif Display',serif;margin-bottom:8px;\">" + p.prenom + " " + p.nom + "</div>" +
+      "<div style=\"display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:.83rem;opacity:.85;\">" +
+        "<div>👤 Sexe : " + p.sexe + "</div>" +
+        "<div>🎂 Âge : " + (p.age ? p.age + " ans" : "—") + "</div>" +
+        "<div>📁 Dossier : " + p.numero_dossier + "</div>" +
+        "<div>🧪 " + examens.length + " examen(s)</div>" +
+      "</div>" +
+    "</div>" +
+    "<h4 style=\"font-size:.85rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);margin-bottom:12px\">Examens & Statuts</h4>" +
+    examensHTML;
+
+  document.getElementById("patientDetailContent").innerHTML = html;
+  openModal("modalPatient");
+}
+
 // ── CHECK STATUS (public) ──
 function checkStatus() {
   var dossier = document.getElementById("checkDossier").value.trim().toUpperCase();
@@ -1067,33 +1194,71 @@ function checkStatus() {
     if (allPatients[i].numero_dossier.toUpperCase() === dossier && allPatients[i].nom.toUpperCase() === nom) { patient = allPatients[i]; break; }
   }
   if (!patient) { showAlert("checkAlert", "Aucun dossier trouvé. Vérifiez le numéro et le nom."); return; }
-  var examen = null;
+  var examens = [];
   for (var i = 0; i < allExamens.length; i++) {
-    if (allExamens[i].patient_id === patient._id) { examen = allExamens[i]; break; }
+    if (allExamens[i].patient_id === patient._id) examens.push(allExamens[i]);
   }
-  if (!examen) { showAlert("checkAlert", "Aucun examen enregistré pour ce dossier."); return; }
+  if (examens.length === 0) { showAlert("checkAlert", "Aucun examen enregistré pour ce dossier."); return; }
   hideAlert("checkAlert");
-  document.getElementById("resultName").textContent = patient.prenom + " " + patient.nom;
-  document.getElementById("resultDate").textContent = formatDate(examen.date_prelevement);
-  document.getElementById("resultDossier").textContent = patient.numero_dossier;
-  var statusMap = {
-    en_cours:   { cls: "en-cours",   label: "En cours de traitement" },
-    disponible: { cls: "disponible", label: "Résultat disponible au laboratoire" },
-    retire:     { cls: "retire",     label: "Résultat déjà retiré" },
-    rejete:     { cls: "rejete",     label: "Rejeté" }
-  };
-  var s = statusMap[examen.statut] || statusMap.en_cours;
-  document.getElementById("statusBadge").className = "status-badge " + s.cls;
-  document.getElementById("statusText").textContent = s.label;
-  document.getElementById("checkForm").style.display = "none";
-  document.getElementById("checkResult").style.display = "block";
+
+  // Open patient detail directly
+  openPatientDetail(patient._id);
 }
 
 function resetCheck() {
   document.getElementById("checkDossier").value = "";
   document.getElementById("checkNom").value = "";
-  document.getElementById("checkForm").style.display = "block";
-  document.getElementById("checkResult").style.display = "none";
+}
+
+// ── HOME TABLE ──
+function renderHomeTable() {
+  var body = document.getElementById("homeTableBody");
+  if (!body) return;
+  var el = document.getElementById("homeSearch");
+  var q = el ? el.value.toLowerCase() : "";
+  var statusMap = {
+    en_cours:   { cls: "en-cours",   label: "En cours de traitement" },
+    disponible: { cls: "disponible", label: "Résultat disponible" },
+    retire:     { cls: "retire",     label: "Résultat retiré" },
+    rejete:     { cls: "rejete",     label: "Rejeté" }
+  };
+  body.innerHTML = "";
+  var count = 0;
+  // Group by patient
+  var seen = {};
+  for (var i = 0; i < allPatients.length; i++) {
+    var p = allPatients[i];
+    if (q && (p.nom + p.prenom + p.numero_dossier).toLowerCase().indexOf(q) === -1) continue;
+    // Get all examens for this patient
+    var examens = [];
+    for (var j = 0; j < allExamens.length; j++) {
+      if (allExamens[j].patient_id === p._id) examens.push(allExamens[j]);
+    }
+    if (examens.length === 0) continue;
+    // Show worst status
+    var statusOrder = ["rejete","en_cours","disponible","retire"];
+    var mainStatut = "en_cours";
+    for (var k = 0; k < statusOrder.length; k++) {
+      for (var j = 0; j < examens.length; j++) {
+        if (examens[j].statut === statusOrder[k]) { mainStatut = statusOrder[k]; break; }
+      }
+    }
+    var s = statusMap[mainStatut] || statusMap.en_cours;
+    var tr = document.createElement("tr");
+    tr.style.cursor = "pointer";
+    tr.title = "Cliquer pour voir le détail";
+    var td1 = document.createElement("td"); td1.innerHTML = "<strong>" + p.numero_dossier + "</strong>"; tr.appendChild(td1);
+    var td2 = document.createElement("td");
+    td2.innerHTML = "<span style=\"color:var(--blue);text-decoration:underline;\">" + p.nom + " " + p.prenom + "</span> <small style=\"color:var(--muted)\">(" + examens.length + " examen" + (examens.length > 1 ? "s" : "") + ")</small>";
+    tr.appendChild(td2);
+    var td3 = document.createElement("td"); td3.innerHTML = "<span class=\"pill " + s.cls + "\"><span class=\"pill-dot\"></span>" + s.label + "</span>"; tr.appendChild(td3);
+    (function(pid) { tr.addEventListener("click", function() { openPatientDetail(pid); }); })(p._id);
+    body.appendChild(tr);
+    count++;
+  }
+  if (count === 0) {
+    body.innerHTML = "<tr><td colspan=\"3\" style=\"text-align:center;padding:28px;color:var(--muted);font-size:.88rem\">⏳ Chargement des données...</td></tr>";
+  }
 }
 
 // ── DASHBOARD TABLE ──
@@ -1127,74 +1292,79 @@ function renderTable() {
       p.sexe,
       examen.type_examen,
       formatDate(examen.date_prelevement),
-      "<span class='pill " + s.cls + "'><span class='pill-dot'></span>" + s.label + "</span>"
+      "<span class=\"pill " + s.cls + "\"><span class=\"pill-dot\"></span>" + s.label + (examen.motif_rejet ? " (" + examen.motif_rejet + ")" : "") + "</span>"
     ];
     for (var k = 0; k < cells.length; k++) {
-      var td = document.createElement("td");
-      td.innerHTML = cells[k];
-      tr.appendChild(td);
+      var td = document.createElement("td"); td.innerHTML = cells[k]; tr.appendChild(td);
     }
     var tdAct = document.createElement("td");
-    var btnEdit = document.createElement("button");
-    btnEdit.className = "btn-action";
-    btnEdit.textContent = "✏️ Modifier";
+    var btnEdit = document.createElement("button"); btnEdit.className = "btn-action"; btnEdit.textContent = "✏️ Modifier";
     (function(eid) { btnEdit.onclick = function() { openUpdateModal(eid); }; })(examen._id);
-    var btnDel = document.createElement("button");
-    btnDel.className = "btn-action";
-    btnDel.style.color = "var(--red)";
-    btnDel.style.marginLeft = "6px";
-    btnDel.textContent = "🗑️ Supprimer";
+    var btnDel = document.createElement("button"); btnDel.className = "btn-action"; btnDel.style.color = "var(--red)"; btnDel.style.marginLeft = "6px"; btnDel.textContent = "🗑️ Supprimer";
     (function(pid, eid) { btnDel.onclick = function() { deletePatient(pid, eid); }; })(p._id, examen._id);
-    tdAct.appendChild(btnEdit);
-    tdAct.appendChild(btnDel);
-    tr.appendChild(tdAct);
+    tdAct.appendChild(btnEdit); tdAct.appendChild(btnDel); tr.appendChild(tdAct);
     body.appendChild(tr);
     count++;
   }
   empty.style.display = count === 0 ? "block" : "none";
 }
 
-// ── HOME TABLE ──
-function renderHomeTable() {
-  var body = document.getElementById("homeTableBody");
-  if (!body) return;
-  var el = document.getElementById("homeSearch");
-  var q = el ? el.value.toLowerCase() : "";
-  var statusMap = {
-    en_cours:   { cls: "en-cours",   label: "En cours de traitement" },
-    disponible: { cls: "disponible", label: "Résultat disponible" },
-    retire:     { cls: "retire",     label: "Résultat retiré" },
-    rejete:     { cls: "rejete",     label: "Rejeté" }
-  };
-  body.innerHTML = "";
-  var count = 0;
-  for (var i = 0; i < allExamens.length; i++) {
-    var examen = allExamens[i];
-    var p = null;
-    for (var j = 0; j < allPatients.length; j++) {
-      if (allPatients[j]._id === examen.patient_id) { p = allPatients[j]; break; }
-    }
-    if (!p) continue;
-    if (q && (p.nom + p.prenom + p.numero_dossier).toLowerCase().indexOf(q) === -1) continue;
-    var s = statusMap[examen.statut] || statusMap.en_cours;
-    var tr = document.createElement("tr");
-    var td1 = document.createElement("td"); td1.innerHTML = "<strong>" + p.numero_dossier + "</strong>"; tr.appendChild(td1);
-    var td2 = document.createElement("td"); td2.textContent = p.nom + " " + p.prenom; tr.appendChild(td2);
-    var td3 = document.createElement("td"); td3.innerHTML = "<span class='pill " + s.cls + "'><span class='pill-dot'></span>" + s.label + "</span>"; tr.appendChild(td3);
-    body.appendChild(tr);
-    count++;
-  }
-  if (count === 0) {
-    body.innerHTML = '<tr><td colspan="3" style="text-align:center;padding:28px;color:var(--muted);font-size:.88rem">⏳ Chargement des données...</td></tr>';
-  }
+// ── ADD PATIENT ──
+// ── EXAM LINE TEMPLATE ──
+var EXAMENS_LISTE = [
+  "Numération Formule Sanguine (NFS)",
+  "Glycémie",
+  "Bilan lipidique",
+  "Bilan hépatique",
+  "Bilan rénal",
+  "Ionogramme sanguin",
+  "TSH (Thyroïde)",
+  "Sérologie",
+  "Urine (ECBU)",
+  "Coproculture",
+  "Coagulation (TP/TCA)",
+  "Groupage sanguin",
+  "CRP (Protéine C réactive)",
+  "Paludisme (GE/TDR)",
+  "Autre examen"
+];
+
+function ajouterLigneExamen() {
+  var container = document.getElementById("examensContainer");
+  var idx = container.children.length;
+  var div = document.createElement("div");
+  div.className = "examen-ligne";
+  div.id = "examen-ligne-" + idx;
+  div.style.cssText = "background:var(--off-white);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px;position:relative;";
+
+  var opts = EXAMENS_LISTE.map(function(e) { return "<option>" + e + "</option>"; }).join("");
+
+  div.innerHTML =
+    "<button onclick=\"supprimerLigneExamen(" + idx + ")\" style=\"position:absolute;top:8px;right:8px;background:none;border:none;color:var(--red);cursor:pointer;font-size:1rem;\">✕</button>" +
+    "<div class=\"form-row\">" +
+      "<div class=\"form-group\" style=\"flex:2\">" +
+        "<label>Type d'examen *</label>" +
+        "<select class=\"exam-type\"><option value=\"\">-- Sélectionner --</option>" + opts + "</select>" +
+      "</div>" +
+      "<div class=\"form-group\" style=\"flex:1\">" +
+        "<label>Date prélèvement *</label>" +
+        "<input type=\"date\" class=\"exam-date\">" +
+      "</div>" +
+    "</div>";
+
+  container.appendChild(div);
 }
 
-// ── ADD PATIENT ──
+function supprimerLigneExamen(idx) {
+  var el = document.getElementById("examen-ligne-" + idx);
+  if (el) el.remove();
+}
+
 function openAddModal() {
-  ["addNom","addPrenom","addDossier"].forEach(function(id) { document.getElementById(id).value = ""; });
+  ["addNom","addPrenom","addDossier","addAge"].forEach(function(id) { document.getElementById(id).value = ""; });
   document.getElementById("addSexe").value = "";
-  document.getElementById("addTypeExamen").value = "";
-  document.getElementById("addDate").value = "";
+  document.getElementById("examensContainer").innerHTML = "";
+  ajouterLigneExamen(); // Ajoute une ligne vide par défaut
   hideAlert("addAlert");
   openModal("modalAdd");
 }
@@ -1203,31 +1373,73 @@ function addPatient() {
   var nom    = document.getElementById("addNom").value.trim().toUpperCase();
   var prenom = document.getElementById("addPrenom").value.trim();
   var sexe   = document.getElementById("addSexe").value;
+  var age    = document.getElementById("addAge").value.trim();
   var dossier= document.getElementById("addDossier").value.trim().toUpperCase();
-  var type   = document.getElementById("addTypeExamen").value;
-  var date   = document.getElementById("addDate").value;
-  if (!nom || !prenom || !sexe || !dossier || !type || !date) { showAlert("addAlert", "Tous les champs sont obligatoires."); return; }
-  for (var i = 0; i < allPatients.length; i++) {
-    if (allPatients[i].numero_dossier === dossier) { showAlert("addAlert", "Ce numéro de dossier existe déjà."); return; }
+
+  if (!nom || !prenom || !sexe || !age || !dossier) {
+    showAlert("addAlert", "Veuillez remplir toutes les informations du patient."); return;
   }
-  if (!patientsCol) { showAlert("addAlert", "Connexion Firebase non établie."); return; }
+  for (var i = 0; i < allPatients.length; i++) {
+    if (allPatients[i].numero_dossier === dossier) {
+      showAlert("addAlert", "Ce numéro de dossier existe déjà."); return;
+    }
+  }
+
+  // Collecter les examens
+  var lignes = document.querySelectorAll("#examensContainer .examen-ligne");
+  if (lignes.length === 0) { showAlert("addAlert", "Ajoutez au moins un examen."); return; }
+  var examens = [];
+  for (var i = 0; i < lignes.length; i++) {
+    var type = lignes[i].querySelector(".exam-type").value;
+    var date = lignes[i].querySelector(".exam-date").value;
+    if (!type || !date) { showAlert("addAlert", "Complétez tous les examens (type et date)."); return; }
+    examens.push({ type_examen: type, date_prelevement: date });
+  }
+
+  if (!patientsCol) { showAlert("addAlert", "Connexion Firebase non établie. Testez sur le site publié."); return; }
+
   var btn = document.querySelector("#modalAdd .btn-block");
-  btn.textContent = "⏳ Enregistrement...";
-  btn.disabled = true;
-  patientsCol.add({ nom: nom, prenom: prenom, sexe: sexe, numero_dossier: dossier })
+  btn.textContent = "⏳ Enregistrement..."; btn.disabled = true;
+
+  patientsCol.add({ nom: nom, prenom: prenom, sexe: sexe, age: age, numero_dossier: dossier })
     .then(function(ref) {
-      return examensCol.add({ patient_id: ref.id, type_examen: type, date_prelevement: date, statut: "en_cours" });
+      var promises = examens.map(function(ex) {
+        return examensCol.add({
+          patient_id: ref.id,
+          type_examen: ex.type_examen,
+          date_prelevement: ex.date_prelevement,
+          statut: "en_cours"
+        });
+      });
+      return Promise.all(promises);
     })
     .then(function() {
       closeModal("modalAdd");
-      btn.textContent = "✅ Enregistrer";
+      btn.textContent = "✅ Enregistrer le patient";
       btn.disabled = false;
     })
     .catch(function(e) {
       showAlert("addAlert", "Erreur : " + e.message);
-      btn.textContent = "✅ Enregistrer";
+      btn.textContent = "✅ Enregistrer le patient";
       btn.disabled = false;
     });
+}
+
+// ── ADD EXAM TO EXISTING PATIENT ──
+function addExamenModal(patientId) {
+  currentEditExamenId = patientId; // reuse variable
+  document.getElementById("addExamType").value = "";
+  document.getElementById("addExamDate").value = "";
+  openModal("modalAddExam");
+}
+
+function saveNewExam() {
+  var type = document.getElementById("addExamType").value;
+  var date = document.getElementById("addExamDate").value;
+  if (!type || !date) { alert("Veuillez remplir tous les champs."); return; }
+  examensCol.add({ patient_id: currentEditExamenId, type_examen: type, date_prelevement: date, statut: "en_cours" })
+    .then(function() { closeModal("modalAddExam"); })
+    .catch(function(e) { alert("Erreur : " + e.message); });
 }
 
 // ── UPDATE STATUS ──
@@ -1238,11 +1450,12 @@ function openUpdateModal(examenId) {
   for (var i = 0; i < allPatients.length; i++) { if (allPatients[i]._id === examen.patient_id) { p = allPatients[i]; break; } }
   document.getElementById("updatePatientInfo").innerHTML =
     "<strong>" + p.nom + " " + p.prenom + "</strong> — " + p.numero_dossier +
-    "<br><span style='color:var(--muted);font-size:.82rem'>" + examen.type_examen + " · " + formatDate(examen.date_prelevement) + "</span>";
+    "<br><span style=\"color:var(--muted);font-size:.82rem\">" + examen.type_examen + " · " + formatDate(examen.date_prelevement) + "</span>";
   document.getElementById("updateStatut").value = examen.statut;
   document.getElementById("retraitNom").value = "";
   document.getElementById("retraitTel").value = "";
   document.getElementById("retraitDate").value = "";
+  document.getElementById("motifRejet").value = examen.motif_rejet || "";
   toggleRetraitFields();
   openModal("modalUpdate");
 }
@@ -1250,70 +1463,63 @@ function openUpdateModal(examenId) {
 function toggleRetraitFields() {
   var s = document.getElementById("updateStatut").value;
   document.getElementById("retraitFields").style.display = s === "retire" ? "block" : "none";
+  document.getElementById("rejeteFields").style.display = s === "rejete" ? "block" : "none";
 }
 
 function saveStatus() {
   var statut = document.getElementById("updateStatut").value;
   var examen = null;
   for (var i = 0; i < allExamens.length; i++) { if (allExamens[i]._id === currentEditExamenId) { examen = allExamens[i]; break; } }
-  var doUpdate = function() {
-    examensCol.doc(examen._id).update({ statut: statut })
-      .then(function() { closeModal("modalUpdate"); })
-      .catch(function(e) { alert("Erreur : " + e.message); });
-  };
+
+  var updateData = { statut: statut };
+
   if (statut === "retire") {
     var nom = document.getElementById("retraitNom").value.trim();
     var tel = document.getElementById("retraitTel").value.trim();
     var date = document.getElementById("retraitDate").value;
     if (!nom || !tel || !date) { alert("Remplissez toutes les informations de retrait."); return; }
-    retraitsCol.add({ examen_id: examen._id, nom_recepteur: nom, telephone_recepteur: tel, date_retrait: date })
-      .then(doUpdate);
-  } else {
-    doUpdate();
+    retraitsCol.add({ examen_id: examen._id, nom_recepteur: nom, telephone_recepteur: tel, date_retrait: date });
   }
+
+  if (statut === "rejete") {
+    var motif = document.getElementById("motifRejet").value;
+    if (!motif) { alert("Veuillez sélectionner un motif de rejet."); return; }
+    updateData.motif_rejet = motif;
+  }
+
+  examensCol.doc(examen._id).update(updateData)
+    .then(function() { closeModal("modalUpdate"); })
+    .catch(function(e) { alert("Erreur : " + e.message); });
 }
 
-// ── DELETE PATIENT ──
+// ── DELETE ──
 function deletePatient(patientId, examenId) {
-  if (!confirm("Confirmer la suppression de ce patient ?")) return;
+  if (!confirm("Confirmer la suppression ?")) return;
   patientsCol.doc(patientId).delete()
     .then(function() { return examensCol.doc(examenId).delete(); })
-    .catch(function(e) { alert("Erreur suppression : " + e.message); });
+    .catch(function(e) { alert("Erreur : " + e.message); });
 }
 
 // ── MODALS ──
 function openModal(id) { document.getElementById(id).classList.add("open"); }
 function closeModal(id) { document.getElementById(id).classList.remove("open"); }
-
-// ── ALERTS ──
 function showAlert(id, msg) { var el = document.getElementById(id); el.textContent = msg; el.classList.add("show"); }
 function hideAlert(id) { document.getElementById(id).classList.remove("show"); }
-
-// ── FORMAT DATE ──
 function formatDate(d) {
   if (!d) return "—";
   var p = d.split("-");
   return p.length === 3 ? p[2] + "/" + p[1] + "/" + p[0] : d;
 }
 
-// ── FERMER MODALS AU CLIC EXTÉRIEUR ──
 document.addEventListener("click", function(e) {
   if (e.target.classList.contains("modal-overlay")) e.target.classList.remove("open");
 });
-
-// ── BLOQUER IMPRESSION ──
 document.addEventListener("keydown", function(e) {
-  if ((e.ctrlKey || e.metaKey) && e.key === "p") {
-    e.preventDefault();
-    alert("L'impression est désactivée.");
-  }
+  if ((e.ctrlKey || e.metaKey) && e.key === "p") { e.preventDefault(); alert("L'impression est désactivée."); }
 });
 
-// ── INITIALISATION ──
 window.addEventListener("DOMContentLoaded", function() {
-  loadFirebase(function() {
-    startListeners();
-  });
+  loadFirebase(function() { startListeners(); });
 });
 </script>
 </body>
